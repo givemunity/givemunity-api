@@ -1,0 +1,22 @@
+env:
+  # general config
+  general:
+    REGION: ap-southeast-1
+    LOG_RETENTION_DAYS: 30 # dev/uat: 1 month, prod: 3 months
+
+  # stage-dependent API Gateway config
+  apiGateway:
+    FULL_LOG_DATA: true # enable to log req/res payload to ease debugging in dev / uat
+    # below monitoring logs/metrics are not needed in dev
+    DETAILED_METRICS: false
+    ACCESS_LOG: false
+    ACCESS_LOG_FORMAT: ""
+    TRACING: false
+
+  lambda:
+    # stage-dependent Lambda config
+
+    # Lambda env variables
+
+  cloudwatch:
+    ALARM_TIMEOUT_THRESHOLD: 20000 # DONT REMOVE: arbitrary number (not 0) required, ignored by dev config to exclude alarm

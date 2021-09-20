@@ -1,0 +1,12 @@
+.yarn
+
+# package directories
+node_modules
+jspm_packages
+**/node_modules
+*/jspm_packages
+**/lambda-test
+
+# Serverless directories
+.serverless
+*/.serverless

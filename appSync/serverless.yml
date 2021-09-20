@@ -1,0 +1,220 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: appSync
+variablesResolutionMode: 20210326
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '2'
+configValidationMode: warn
+
+plugins:
+  - serverless-appsync-plugin
+  - serverless-plugin-split-stacks
+
+custom:
+  env: ${file(./env-${opt:stage, 'dev'}.yml):env}
+  appSync:
+    name:  # defaults to api
+    authenticationType: AMAZON_COGNITO_USER_POOLS
+    schema: # schema file or array of files to merge, defaults to schema.graphql (glob pattern is acceptable)
+    userPoolConfig:
+      awsRegion: # defaults to provider region
+      defaultAction: # required # ALLOW or DENY
+      userPoolId: # required # user pool ID
+      appIdClientRegex: # optional      
+    apiKeys:
+      - name: john # name of the api key
+        description: 'My api key'
+        expiresAfter: 30d # api key life time
+    # Array of additional authentication providers
+    additionalAuthenticationProviders:
+      - authenticationType: API_KEY
+      - authenticationType: AWS_IAM
+    logConfig:
+      loggingRoleArn: { Fn::GetAtt: [AppSyncLoggingServiceRole, Arn] } # Where AppSyncLoggingServiceRole is a role with CloudWatch Logs write access
+      level: ERROR # Logging Level: NONE | ERROR | ALL
+      excludeVerboseContent: false
+    defaultMappingTemplates: # default templates. Useful for Lambda templates that are often repetitive. Will be used if the template is not specified in a resolver
+      request: my.request.template.tpl # or, e.g: false for Direct lambdas
+      response: my.response.template.tpl # or e.g.: false for Direct lambdas
+    mappingTemplatesLocation: # defaults to mapping-templates
+    mappingTemplates:
+      - dataSource: # data source name
+        type: # type name in schema (e.g. Query, Mutation, Subscription, or a custom type e.g. User)
+        field: getUserInfo
+        # kind: UNIT (default, not required) or PIPELINE (required for pipeline resolvers)
+        functions: # array of functions if kind === 'PIPELINE'
+          - # function name
+        request: # request mapping template name | defaults to `defaultMappingTemplates.request` or {type}.{field}.request.vtl
+        response: # response mapping template name | defaults to `defaultMappingTemplates.response` or {type}.{field}.response.vtl
+        # When versioning is enabled with `versioned` on the datasource,
+        # the datasync options of the resolver.
+        # Disabled by default.
+        # Accepted values:
+        # - `true`: sync enabled with default ConflictDetection VERSION
+        # - an object with the following keys:
+        #    - conflictDetection: The Conflict Detection strategy to use.
+        #    - functionName: The function name in your serverless.yml. Ignored if lambdaFunctionArn is provided.
+        #    - lambdaFunctionArn: The Arn for the Lambda function to use as the Conflict Handler.
+        #    - conflictHandler: The Conflict Resolution strategy to perform in the event of a conflict.
+        sync:
+          conflictDetection: VERSION # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-appsync-resolver-syncconfig.html
+          conflictHandler: OPTIMISTIC_CONCURRENCY # when not using lambda conflict handler choose The Conflict Resolution strategy to perform in the event of a conflict. OPTIMISTIC_CONCURRENCY / AUTOMERGE / LAMBDA
+          functionName: graphql # The function name in your serverless.yml. Ignored if lambdaFunctionArn is provided.
+          lambdaFunctionArn: "arn:aws:lambda:{REGION}:{ACCOUNT_ID}:myFunction"
+
+      - ${file({fileLocation}.yml)} # link to a file with arrays of mapping templates
+    functionConfigurationsLocation: # defaults to mappingTemplatesLocation (mapping-templates)
+    functionConfigurations:
+      - name: # function name
+        dataSource: # data source name
+        request: # request mapping template name | defaults to {name}.request.vtl
+        response: # reponse mapping template name | defaults to {name}.response.vtl
+    dataSources:
+      - type: NONE
+        name: none
+      - type: AMAZON_DYNAMODB
+        name: # data source name
+        description: # DynamoDB Table Description
+        config:
+          tableName: { Ref: MyTable } # Where MyTable is a dynamodb table defined in Resources
+          serviceRoleArn: { Fn::GetAtt: [AppSyncDynamoDBServiceRole, Arn] } # Where AppSyncDynamoDBServiceRole is an IAM role defined in Resources
+          iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
+            - Effect: "Allow"
+              Action:
+                - "dynamodb:GetItem"
+              Resource:
+                - "arn:aws:dynamodb:{REGION}:{ACCOUNT_ID}:myTable"
+                - "arn:aws:dynamodb:{REGION}:{ACCOUNT_ID}:myTable/*"
+          # Versioned DataSource configuration
+          versioned: false # (default, not required)
+          # When you enable versioning on a DynamoDB data source, you specify the following fields
+          # read more at https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-appsync-datasource-deltasyncconfig.html
+          # deltaSyncConfig:
+          #   baseTableTTL: 0 # (default, not required) # The amount of time (in minutes) items should be kept in the base table when deleted. Set to 0 to delete items in the base table immediately
+          #   deltaSyncTableName: { Ref: MyTableDelta } # required # The Delta Sync table name
+          #   deltaSyncTableTTL: 60 # (default, not required) # The amount of time (in minutes) the delta sync table will keep track of changes
+
+          region: # Overwrite default region for this data source
+      - type: AWS_LAMBDA
+        name: # data source name
+        description: 'Lambda DataSource'
+        config:
+          functionName: graphql # The function name in your serverless.yml. Ignored if lambdaFunctionArn is provided.
+          lambdaFunctionArn: { Fn::GetAtt: [GraphqlLambdaFunction, Arn] } # Where GraphqlLambdaFunction is the lambda function cloudformation resource created by serverless for the serverless function named graphql
+          serviceRoleArn: { Fn::GetAtt: [AppSyncLambdaServiceRole, Arn] } # Where AppSyncLambdaServiceRole is an IAM role defined in Resources
+          iamRoleStatements: # custom IAM Role statements for this DataSource. Ignored if `serviceRoleArn` is present. Auto-generated if both `serviceRoleArn` and `iamRoleStatements` are omitted
+            - Effect: "Allow"
+              Action:
+                - "lambda:invokeFunction"
+              Resource:
+                - "arn:aws:lambda:{REGION}:{ACCOUNT_ID}:myFunction"
+                - "arn:aws:lambda:{REGION}:{ACCOUNT_ID}:myFunction:*"
+      - type: HTTP
+        name: # data source name
+        description: 'Http endpoint'
+        config:
+          endpoint: # required # "https://{DOMAIN}/{PATH}"
+      - ${file({dataSources}.yml)} # link to a file with an array or object of datasources
+    substitutions: # allows to pass variables from here to velocity templates
+      # ${exampleVar1} will be replaced with given value in all mapping templates
+      exampleVar1: "${self:service.name}"
+      exampleVar2: {'Fn::ImportValue': 'Some-external-stuff'}
+    xrayEnabled: true # Bool, Optional. Enable X-Ray. disabled by default.
+    wafConfig:
+      enabled: false
+    tags: # Tags to be added to AppSync
+      key1: value1
+      key2: value2
+
+
+  
+
+package: # This is to package each function individually.
+  individually: true
+  patterns:
+    - "!**/*"  # quotes(") are needed
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: dev # Default stage, it can be overwritten in the command-line parameter.
+  region: ${self:custom.env.general.REGION}
+  endpointType: REGIONAL
+  memorySize: 128
+  timeout: 10
+  logRetentionInDays: ${self:custom.env.general.LOG_RETENTION_DAYS} # CloudWatch Log Group Retention Days
+  stackTags:
+    env: ${sls:stage}
+  # You can define "service wide" environment variables here
+  environment:
+    REGION: ${self:custom.env.general.REGION}
+    STAGE: ${sls:stage}
+
+
+# you can add CloudFormation resource templates here
+
+# resources:
+#   Resources:
+#     DynamoDBTable1:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         AttributeDefinitions: 
+#           - AttributeName: PK
+#             AttributeType: S
+#           - AttributeName: SK
+#             AttributeType: S
+#           - AttributeName: GSI1PK
+#             AttributeType: S
+#           - AttributeName: GSI1SK
+#             AttributeType: S
+#           - AttributeName: GSI2PK
+#             AttributeType: S
+#           - AttributeName: GSI2SK
+#             AttributeType: N
+#         BillingMode: PAY_PER_REQUEST
+#         GlobalSecondaryIndexes: 
+#           - IndexName: GSI1PK-GSI1SK-index
+#             KeySchema: 
+#               - AttributeName: GSI1PK
+#                 KeyType: HASH
+#               - AttributeName: GSI1SK
+#                 KeyType: RANGE
+#             Projection: 
+#               ProjectionType: ALL
+#           - IndexName: GSI2PK-GSI2SK-index
+#             KeySchema: 
+#               - AttributeName: GSI2PK
+#                 KeyType: HASH
+#               - AttributeName: GSI2SK
+#                 KeyType: RANGE
+#             Projection: 
+#               ProjectionType: ALL
+#         KeySchema: 
+#           - AttributeName: PK
+#             KeyType: HASH
+#           - AttributeName: SK
+#             KeyType: RANGE
+#         TableName: ${env:DYNAMODB_TABLE_NAME}
+#         Tags: 
+#           - Key: system
+#             Value: ${self:service}
+#           - Key: role
+#             Value: db
+#           - Key: department
+#             Value: it
+#           - Key: env
+#             Value: ${sls:stage}
