@@ -1,0 +1,21 @@
+handler: func/createDonorResponseV1/index.handler
+description: Create Donor Response
+package:
+  patterns:
+    - func/createDonorResponseV1/**
+provisionedConcurrency: ${self:custom.env.lambda.PROVISIONED_CONCURRENCY}
+environment: # Define function environment variables here
+  AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+events:
+  - http:
+    #### API gateway configurtaion   
+      path: /v1/donor_response
+      method: POST
+      private: false
+      integration: lambda-proxy
+      request:
+        schemas:
+          application/json:
+            schema: ${file(models/createDonorResponseV1_input_schema.json)}
+            name: createDonorResponseV1Input
+            description: Schema of request body for Create Donor Response API (v1)

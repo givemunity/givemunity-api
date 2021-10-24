@@ -1,0 +1,25 @@
+env:
+  # general config
+  general:
+    REGION: ap-east-1
+    LOG_RETENTION_DAYS: 30 # dev/uat: 1 month, prod: 3 months
+
+  # stage-dependent API Gateway config
+  apiGateway:
+    FULL_LOG_DATA: true # enable to log req/res payload to ease debugging in dev / uat
+    DETAILED_METRICS: true # enable to generate metrics for every API method
+    ACCESS_LOG: true # enable for easier log checking
+    ACCESS_LOG_FORMAT: ${self:custom.jsonToText.accessLogFormat} # custom access log format
+    TRACING: true # x-ray tracing
+
+  lambda:
+    # stage-dependent Lambda config
+    # PROVISIONED_CONCURRENCY: 1
+
+    # Lambda env variables
+
+  dynamodb:
+    DONOR_RESPONSE_STORE: poc_donor_response_store_uat # dynamodb table to store all donor response data
+
+  cloudwatch:
+    ALARM_TIMEOUT_THRESHOLD: 29000

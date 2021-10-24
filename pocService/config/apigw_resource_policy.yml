@@ -1,0 +1,109 @@
+# resource path format: execute-api:/{stage}/{API_method}/{resource_path}
+
+dev: # allow all IPs
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/*/* 
+
+uat: # allow all IPs
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/*/* 
+
+prod:
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/POST/v1/ticket
+    Condition:
+      IpAddress:
+        aws:SourceIp:
+        # District App
+        - 18.167.0.198
+        - 18.163.211.153
+
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/POST/v1/retail
+    Condition:
+      IpAddress:
+        aws:SourceIp:
+        # RTPOS (Xiqu, Cyberport, PSO, CHKC)
+        - 103.108.248.20
+        - 103.108.248.21
+        - 103.108.248.22
+        - 103.108.248.23
+        - 103.108.248.24
+        # RTPOS (M+, WKCDA Tower)
+        - 103.108.250.20
+        - 103.108.250.21
+        - 103.108.250.22
+        - 103.108.250.23
+        - 103.108.250.24
+
+  # CRM Donation Txn Creation
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/POST/v1/donation
+    Condition:
+      IpAddress:
+        aws:SourceIp:
+        # M+ backend
+        - 16.162.126.97
+        - 18.167.32.184
+        - 18.167.146.210
+
+  # Purchase Paid Membership After Payment
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/POST/v1/membership/paid/purchaseafterpayment
+    Condition:
+      IpAddress:
+        aws:SourceIp:
+        # M+ backend
+        - 16.162.126.97
+        - 18.167.32.184
+        - 18.167.146.210
+
+  # Purchase Paid Membership Before Payment
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/POST/v1/membership/paid/purchasebeforepayment
+    Condition:
+      IpAddress:
+        aws:SourceIp:
+        # M+ backend
+        - 16.162.126.97
+        - 18.167.32.184
+        - 18.167.146.210
+
+  # Store Ecommerce Txn
+  - Effect: Allow
+    Principal: "*"
+    Action: execute-api:Invoke
+    Resource: execute-api:/*/POST/v1/ecomm
+    Condition:
+      IpAddress:
+        aws:SourceIp:
+        # ECOMM
+        - 194.145.17.1
+# - Effect: Allow
+#   Principal: "*"
+#   Action: execute-api:Invoke
+#   Resource: arn:aws:execute-api:ap-east-1:775599618962:ap4b7ysemb/prod/PUT/v2/profile
+#   Condition:
+#     IpAddress:
+#       aws:SourceIp:
+#       - xx.xx.xx.xx
+#       - yy.yy.yy.yy
+
+  # - Effect: Deny # block all IPs, remove this blacklist policy if at least 1 whitelist policy is set
+  #   Principal: "*"
+  #   Action: execute-api:Invoke
+  #   Resource: execute-api:/*/*/* 

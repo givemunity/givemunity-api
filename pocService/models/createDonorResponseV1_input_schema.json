@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "type": "object",
+  "required": ["name", "email", "amount"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Donor Name",
+      "minLength": 1
+    },
+    "email": {
+      "type": "string",
+      "description": "Donor Email",
+      "format": "email"
+    },
+    "amount": {
+      "type": "number",
+      "description": "Donation Amount"
+    }
+  }
+}

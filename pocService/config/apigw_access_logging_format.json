@@ -1,0 +1,17 @@
+{
+    "aws_api_id": "$context.apiId",
+    "api_path": "$context.path",
+    "request_id": "$context.requestId",
+    "awsEndpointRequestId": "$context.awsEndpointRequestId",
+    "request_time": "$context.requestTime",
+    "source_ip": "$context.identity.sourceIp",
+    "api_key": "$context.identity.apiKey",
+    "stage": "$context.stage",
+    "http_method": "$context.httpMethod",
+    "integration_status": "$context.integration.status",
+    "integration_latency": "$context.integration.latency",
+    "integration_error": "$context.integrationErrorMessage",
+    "status": "$context.status",
+    "response_latency": "$context.responseLatency",
+    "xray_trace_id": "$context.xrayTraceId"
+}

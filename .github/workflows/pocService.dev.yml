@@ -1,0 +1,48 @@
+name: "dev: Deploy POC Service"
+
+on:
+  push:
+    # run the workflow only on changes
+    # to the pocService path and pocService workflow
+    paths:
+      - "pocService/**"
+      - ".github/workflows/pocService.dev.yml"
+    branches:
+      - dev
+concurrency:
+  group: pocService-dev
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+    - name: Checkout Git Branch
+      uses: actions/checkout@v2
+      with:
+        ref: 'dev'
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+    - name: Install Serverless Framework
+      run: npm install -g serverless
+      working-directory: ./pocService
+    - name: Serverless AWS authentication
+      run: sls config credentials --provider aws --key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      working-directory: ./pocService
+    - name: Install NPM dependencies
+      run: |
+        # make file runnable, might not be necessary
+        chmod +x "${GITHUB_WORKSPACE}/.github/scripts/npm_install_all_directories.sh"
+        # run script
+        "${GITHUB_WORKSPACE}/.github/scripts/npm_install_all_directories.sh" "${GITHUB_WORKSPACE}/pocService"
+        # ./npm_install_all_directories.sh
+      working-directory: ./pocService
+    - name: Deploy Lambda functions
+      run: sls deploy -s dev --verbose
+      working-directory: ./pocService

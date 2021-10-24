@@ -1,0 +1,18 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "type": "object",
+    "properties": {
+        "result": {
+            "type": "string",
+            "default": "error"
+        },
+        "message": {
+            "type": "string",
+            "description": "Generic error message"
+        },
+        "details": {
+            "type": ["string", "object", "array"],
+            "description": "Details about the error"
+        }
+    }
+}

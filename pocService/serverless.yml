@@ -1,0 +1,259 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: txnService
+variablesResolutionMode: 20210326
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '2'
+configValidationMode: warn
+
+plugins:
+  - serverless-plugin-ifelse
+  - serverless-api-gateway-execution-log-manager
+
+custom:
+  mappingTemplates: ${file(./mapping_templates/vtlToText.js)}
+  jsonToText: ${file(./config/jsonToText.js)}
+  serverlessIfElse:
+    - If: '"${sls:stage}" == "dev"'
+      Exclude:
+        - functions.createDonorResponseV1.provisionedConcurrency
+    - If: '"${sls:stage}" == "uat"'
+      Exclude:
+        - functions.createDonorResponseV1.provisionedConcurrency
+    - If: '"${sls:stage}" == "prod"'
+      Exclude:
+        - functions.createDonorResponseV1.provisionedConcurrency
+
+  env: ${file(./env-${opt:stage, 'dev'}.yml):env}
+
+package: # This is to package each function individually.
+  individually: true
+  patterns:
+    - "!**/*"  # quotes(") are needed
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
+  stage: dev # Default stage, it can be overwritten in the command-line parameter.
+  region: ${self:custom.env.general.REGION}
+  endpointType: REGIONAL
+  memorySize: 128
+  timeout: 29
+  logRetentionInDays: ${self:custom.env.general.LOG_RETENTION_DAYS} # CloudWatch Log Group Retention Days
+  resourcePolicy: ${file(config/apigw_resource_policy.yml):${sls:stage}}
+  # monitoring config
+  tracing: # X-Ray Tracing
+    lambda: true
+    apiGateway: ${self:custom.env.apiGateway.TRACING}
+  apiGateway:
+    description: Givemunity Bundle POC Service - ${sls:stage} Environment # API Gateway description
+    metrics: ${self:custom.env.apiGateway.DETAILED_METRICS} # API Gateway Detailed CloudWatch Metrics
+    apiKeySourceType: HEADER # Source of API key for usage plan. HEADER or AUTHORIZER
+
+  logs:
+    restApi:
+      # API gateway built-in detailed log
+      level: INFO
+      executionLogging: true
+      fullExecutionData: ${self:custom.env.apiGateway.FULL_LOG_DATA}
+      # Custom access log
+      accessLogging: ${self:custom.env.apiGateway.ACCESS_LOG}
+      format: ${self:custom.env.apiGateway.ACCESS_LOG_FORMAT}
+
+  stackTags:
+    system: ${self:service}
+    role: api
+    env: ${sls:stage}
+  # You can add statements to the Lambda function's IAM Role here
+  iam:
+    role:
+      statements:
+      # X-ray Tracing
+        - Effect: "Allow"
+          Action:
+            - "xray:PutTraceSegments"
+            - "xray:PutTelemetryRecords"
+          Resource: "*"
+
+      # Cloudwatch
+        - Effect: "Allow"
+          Action:
+            - "logs:CreateLogGroup"
+          Resource:
+            Fn::Sub: "arn:aws:logs:${aws:region}:${aws:accountId}:*"
+        - Effect: "Allow"
+          Action:
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+          Resource:
+            Fn::Sub: "arn:aws:logs:${aws:region}:${aws:accountId}:log-group:/aws/lambda/*:*"
+
+      # S3
+        - Effect: "Allow"
+          Action:
+            - "s3:PutObject"
+            - "s3:PutObjectTagging"
+          Resource: "*"
+
+      # DynamoDB
+        - Effect: "Allow"
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+          Resource:
+            - arn:aws:dynamodb:${aws:region}:${aws:accountId}:table/*
+
+      # Invoke lambda
+        - Effect: "Allow"
+          Action:
+            - lambda:InvokeFunction
+            - lambda:Invoke
+          Resource:
+            - "*"
+
+      # SQS DLQ
+        - Effect: "Allow"
+          Action:
+            - sqs:SendMessage
+            - sqs:SendMessageBatch
+          Resource:
+            - "*"
+
+  # You can define "service wide" environment variables here
+  environment:
+    REGION: ${self:custom.env.general.REGION}
+    STAGE: ${sls:stage}
+  
+functions:
+  createDonorResponseV1: ${file(./config/lambda/createDonorResponseV1_lambda.yml)}
+  
+# Other triggers of Lambda function
+#      - websocket: $connect
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+
+# you can add CloudFormation resource templates here
+resources:
+  Resources:
+    ApiGatewayRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${sls:stage}-${self:service}
+  
+    # API Gateway default responses
+    GatewayResponseBadRequestBody: # when request body fails in schema validation
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseType: BAD_REQUEST_BODY
+        RestApiId: 
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '400'
+        ResponseTemplates:
+          application/json: ${self:custom.jsonToText.badRequestError}
+    
+    GatewayResponseInvalidApiKey: # when api key is invalid
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseType: INVALID_API_KEY
+        RestApiId: 
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '401'
+        ResponseTemplates:
+          application/json: ${self:custom.jsonToText.invalidKeyError}
+    
+    GatewayResponseAccessDenied: # when IP is not whitelisted
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseType: ACCESS_DENIED
+        RestApiId: 
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '403'
+        ResponseTemplates:
+          application/json: ${self:custom.jsonToText.accessDeniedError}
+
+    GatewayResponseUnsupportedFormat: # when request content type is rejected
+      Type: 'AWS::ApiGateway::GatewayResponse'
+      Properties:
+        ResponseType: UNSUPPORTED_MEDIA_TYPE
+        RestApiId: 
+          Ref: 'ApiGatewayRestApi'
+        StatusCode: '415'
+        ResponseTemplates:
+          application/json: ${self:custom.jsonToText.unsupportedFormatError}
+# resources:
+#   Resources:
+#     DynamoDBTable1:
+#       Type: AWS::DynamoDB::Table
+#       Properties:
+#         AttributeDefinitions: 
+#           - AttributeName: PK
+#             AttributeType: S
+#           - AttributeName: SK
+#             AttributeType: S
+#           - AttributeName: GSI1PK
+#             AttributeType: S
+#           - AttributeName: GSI1SK
+#             AttributeType: S
+#           - AttributeName: GSI2PK
+#             AttributeType: S
+#           - AttributeName: GSI2SK
+#             AttributeType: N
+#         BillingMode: PAY_PER_REQUEST
+#         GlobalSecondaryIndexes: 
+#           - IndexName: GSI1PK-GSI1SK-index
+#             KeySchema: 
+#               - AttributeName: GSI1PK
+#                 KeyType: HASH
+#               - AttributeName: GSI1SK
+#                 KeyType: RANGE
+#             Projection: 
+#               ProjectionType: ALL
+#           - IndexName: GSI2PK-GSI2SK-index
+#             KeySchema: 
+#               - AttributeName: GSI2PK
+#                 KeyType: HASH
+#               - AttributeName: GSI2SK
+#                 KeyType: RANGE
+#             Projection: 
+#               ProjectionType: ALL
+#         KeySchema: 
+#           - AttributeName: PK
+#             KeyType: HASH
+#           - AttributeName: SK
+#             KeyType: RANGE
+#         TableName: ${env:DYNAMODB_TABLE_NAME}
+#         Tags: 
+#           - Key: system
+#             Value: ${self:service}
+#           - Key: role
+#             Value: db
+#           - Key: department
+#             Value: it
+#           - Key: env
+#             Value: ${sls:stage}
