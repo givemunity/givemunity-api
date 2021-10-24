@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: txnService
+service: pocService
 variablesResolutionMode: 20210326
 
 # You can pin your service to only deploy with a specific Serverless version
