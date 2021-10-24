@@ -3,9 +3,10 @@ description: Create Donor Response
 package:
   patterns:
     - func/createDonorResponseV1/**
-provisionedConcurrency: ${self:custom.env.lambda.PROVISIONED_CONCURRENCY}
+# provisionedConcurrency: ${self:custom.env.lambda.PROVISIONED_CONCURRENCY}
 environment: # Define function environment variables here
   AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+  TABLE_NAME: ${self:custom.env.dynamodb.DONOR_RESPONSE_STORE}
 events:
   - http:
     #### API gateway configurtaion   
