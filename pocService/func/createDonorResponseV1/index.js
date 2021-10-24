@@ -25,23 +25,23 @@ const baseHandler = async (event, context) => {
 
     await docClient.put({ TableName: tableName, Item: record }).promise()
 
-    let link = null
+    let payment_link = null
     switch (record.amount) {
         case 100:
-            link = process.env.MONTHLY_DONTATION_LINK_100
+            payment_link = process.env.MONTHLY_DONTATION_LINK_100
             break
         case 300:
-            link = process.env.MONTHLY_DONTATION_LINK_300
+            payment_link = process.env.MONTHLY_DONTATION_LINK_300
             break
         case 500:
-            link = process.env.MONTHLY_DONTATION_LINK_500
+            payment_link = process.env.MONTHLY_DONTATION_LINK_500
             break
         default:
-            link = process.env.MONTHLY_DONTATION_LINK_500
+            payment_link = process.env.MONTHLY_DONTATION_LINK_500
             break
     }
 
-    const response = { result: 'success', message: 'successfully stored the data', link: link }
+    const response = { result: 'success', message: 'successfully stored the data', payment_link: payment_link }
     return { statusCode: 201, body: response }
 }
 
