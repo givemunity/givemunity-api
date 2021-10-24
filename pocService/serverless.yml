@@ -141,6 +141,7 @@ provider:
   
 functions:
   createDonorResponseV1: ${file(./config/lambda/createDonorResponseV1_lambda.yml)}
+  addContactToMailchimpV1: ${file(./config/lambda/addContactToMailchimpV1_lambda.yml)}
   
 # Other triggers of Lambda function
 #      - websocket: $connect
