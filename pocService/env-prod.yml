@@ -24,5 +24,9 @@ env:
   dynamodb:
     DONOR_RESPONSE_STORE: poc_donor_response_store_prod # dynamodb table to store all donor response data
 
+  sqs:
+    CONTACT_TO_MAILCHIMP_QUEUE_URL: https://sqs.ap-east-1.amazonaws.com/540852911225/contact_to_mailchimp_prod.fifo
+    CONTACT_TO_MAILCHIMP_QUEUE_ARN: arn:aws:sqs:ap-east-1:540852911225:contact_to_mailchimp_prod.fifo
+
   cloudwatch:
     ALARM_TIMEOUT_THRESHOLD: 29000

@@ -130,6 +130,7 @@ provider:
           Action:
             - sqs:SendMessage
             - sqs:SendMessageBatch
+            - sqs:ReceiveMessage
           Resource:
             - "*"
 

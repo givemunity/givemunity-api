@@ -1,0 +1,15 @@
+handler: func/addContactToMailchimpV1/index.handler
+description: Add Contact to MailChimp
+package:
+  patterns:
+    - func/addContactToMailchimpV1/**
+environment: # Define function-specific environment variables here
+  AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+  MAILCHIMP_API_KEY: ${ssm:/${sls:stage}/mailchimp/api_key}
+  MAILCHIMP_SERVER: ${ssm:/${sls:stage}/mailchimp/server}
+  MAILCHIMP_LIST_ID: ${ssm:/${sls:stage}/mailchimp/list_id}
+memorySize: 128
+events:
+  - sqs:
+      arn: ${self:custom.env.lambda.SQS_QUEUE_ARN}
+      batchSize: 10

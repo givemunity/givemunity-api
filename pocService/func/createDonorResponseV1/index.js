@@ -10,10 +10,12 @@ const AWSXRay = require('aws-xray-sdk-core')
 const AWS = AWSXRay.captureAWS(require('aws-sdk'))
 AWS.config.update({ region: 'ap-east-1' })
 const docClient = new AWS.DynamoDB.DocumentClient()
+const sqsClient = new AWS.SQS({apiVersion: '2012-11-05'})
 
 const { v4: uuidv4 } = require('uuid')
 
 const tableName = process.env.TABLE_NAME
+const sqsQueueUrl = process.env.SQS_QUEUE_URL
 
 const baseHandler = async (event, context) => {
     const record = {
@@ -24,6 +26,12 @@ const baseHandler = async (event, context) => {
     }
 
     await docClient.put({ TableName: tableName, Item: record }).promise()
+    await sqsClient.sendMessage({ 
+        MessageGroupId: "cv",
+        MessageDeduplicationId: record.id,
+        MessageBody: JSON.stringify(record),
+        QueueUrl: sqsQueueUrl
+    }).promise();
 
     let payment_link = null
     switch (record.amount) {
