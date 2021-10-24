@@ -11,5 +11,5 @@ environment: # Define function-specific environment variables here
 memorySize: 128
 events:
   - sqs:
-      arn: ${self:custom.env.lambda.SQS_QUEUE_ARN}
+      arn: ${self:custom.env.sqs.CONTACT_TO_MAILCHIMP_QUEUE_ARN}
       batchSize: 10
