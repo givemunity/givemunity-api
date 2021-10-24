@@ -16,7 +16,7 @@ const { v4: uuidv4 } = require('uuid')
 const tableName = process.env.TABLE_NAME
 
 const baseHandler = async (event, context) => {
-    let record = {
+    const record = {
         id: uuidv4(),
         name: event.body.name,
         email: event.body.email,
@@ -25,7 +25,23 @@ const baseHandler = async (event, context) => {
 
     await docClient.put({ TableName: tableName, Item: record }).promise()
 
-    const response = { result: 'success', message: 'successfully stored the data', link: null }
+    let link = null
+    switch (record.amount) {
+        case 100:
+            link = process.env.MONTHLY_DONTATION_LINK_100
+            break
+        case 300:
+            link = process.env.MONTHLY_DONTATION_LINK_300
+            break
+        case 500:
+            link = process.env.MONTHLY_DONTATION_LINK_500
+            break
+        default:
+            link = process.env.MONTHLY_DONTATION_LINK_500
+            break
+    }
+
+    const response = { result: 'success', message: 'successfully stored the data', link: link }
     return { statusCode: 201, body: response }
 }
 

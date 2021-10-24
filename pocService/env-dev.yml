@@ -18,6 +18,9 @@ env:
     # PROVISIONED_CONCURRENCY: 1 # DONT REMOVE: arbitrary number (not 0) required, ignored by dev config to exclude provisioned concurrency
 
     # Lambda env variables
+    MONTHLY_DONTATION_LINK_100: https://buy.stripe.com/test_5kA9CF0w78958sE288
+    MONTHLY_DONTATION_LINK_300: https://buy.stripe.com/test_6oE6qt92D0GDgZa7st
+    MONTHLY_DONTATION_LINK_500: https://buy.stripe.com/test_5kA025emXextbEQaEG
 
   dynamodb:
     DONOR_RESPONSE_STORE: poc_donor_response_store_dev # dynamodb table to store all donor response data

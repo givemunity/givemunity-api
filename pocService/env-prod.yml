@@ -17,6 +17,9 @@ env:
     # PROVISIONED_CONCURRENCY: 1
 
     # Lambda env variables
+    MONTHLY_DONTATION_LINK_100: Not yet created
+    MONTHLY_DONTATION_LINK_300: Not yet created
+    MONTHLY_DONTATION_LINK_500: Not yet created
 
   dynamodb:
     DONOR_RESPONSE_STORE: poc_donor_response_store_prod # dynamodb table to store all donor response data

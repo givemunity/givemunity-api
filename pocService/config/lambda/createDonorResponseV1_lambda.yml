@@ -7,6 +7,9 @@ package:
 environment: # Define function environment variables here
   AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
   TABLE_NAME: ${self:custom.env.dynamodb.DONOR_RESPONSE_STORE}
+  MONTHLY_DONTATION_LINK_100: ${self:custom.env.lambda.MONTHLY_DONTATION_LINK_100}
+  MONTHLY_DONTATION_LINK_300: ${self:custom.env.lambda.MONTHLY_DONTATION_LINK_300}
+  MONTHLY_DONTATION_LINK_500: ${self:custom.env.lambda.MONTHLY_DONTATION_LINK_500}
 events:
   - http:
     #### API gateway configurtaion   
