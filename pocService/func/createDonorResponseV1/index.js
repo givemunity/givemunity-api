@@ -2,6 +2,7 @@ const middy = require('@middy/core')
 const { createError } = require('@middy/util')
 
 const httpResponseSerializer = require('@middy/http-response-serializer')
+const cors = require('@middy/http-cors')
 const httpErrorHandler = require('./middlewares/httpErrorHandler')
 const jsonBodyParser = require('./middlewares/jsonBodyParser')
 const inputOutputLogger = require('./middlewares/inputOutputLogger')
@@ -66,5 +67,6 @@ const handler = middy(baseHandler)
         ],
         default: 'application/json'
     }))
+    .use(cors())
 
 module.exports = { handler }

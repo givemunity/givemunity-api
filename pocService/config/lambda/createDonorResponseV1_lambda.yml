@@ -16,6 +16,7 @@ events:
     #### API gateway configurtaion   
       path: /v1/donor_response
       method: POST
+      cors: true
       private: false
       integration: lambda-proxy
       request:
